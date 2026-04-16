@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Royal Mobile</title>
+    <style>
+        :root { --gold: #b39359; --bg-dark: #050410; --glass: rgba(255, 255, 255, 0.07); }
+        body {
+            margin: 0; font-family: 'Cairo', sans-serif; background-color: var(--bg-dark);
+            color: #fff; background-image: radial-gradient(circle at 50% 50%, #1a1a2e 0%, #050410 100%);
+            min-height: 100vh;
+        }
+        nav {
+            background: rgba(0, 0, 0, 0.9); padding: 15px; text-align: center;
+            backdrop-filter: blur(10px); border-bottom: 1px solid var(--gold);
+            position: sticky; top: 0; z-index: 1000;
+        }
+        .logo-text { font-size: 1.6rem; font-weight: 900; color: var(--gold); margin-bottom: 10px; display: block; }
+        .nav-buttons { display: flex; justify-content: center; gap: 10px; }
+        nav button { background: none; border: 1px solid var(--gold); color: var(--gold); padding: 6px 12px; border-radius: 8px; font-size: 0.8rem; cursor: pointer; font-family: 'Cairo'; }
+
+        .container { padding: 12px; max-width: 1200px; margin: auto; }
+        .phone-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+        
+        .phone-card {
+            background: var(--glass); border-radius: 15px; padding: 10px;
+            text-align: center; border: 1px solid rgba(255,255,255,0.1);
+            display: flex; flex-direction: column; justify-content: space-between;
+        }
+        .phone-card img { width: 100%; height: 130px; object-fit: contain; margin-bottom: 8px; border-radius: 10px; }
+        .phone-card h3 { font-size: 0.85rem; margin: 5px 0; height: 35px; overflow: hidden; }
+        .price-tag { color: #e6b800; font-size: 1.1rem; font-weight: 700; margin-bottom: 8px; }
+        
+        .btn-info { background: rgba(255,255,255,0.1); color: #ddd; border: 1px solid #555; padding: 5px; border-radius: 5px; font-size: 0.7rem; margin-bottom: 5px; cursor: pointer; font-family: 'Cairo'; }
+        .btn-order { background: var(--gold); color: #fff; border: none; padding: 8px; border-radius: 8px; font-weight: 700; font-size: 0.8rem; cursor: pointer; font-family: 'Cairo'; }
+
+        /* ستايل لوحة التحكم */
+        .admin-box { background: var(--glass); padding: 20px; border-radius: 15px; border: 1px solid var(--gold); margin-bottom: 20px; }
+        .admin-list-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); font-size: 0.9rem; }
+        .del-btn-small { color: #ff4d4d; border: 1px solid #ff4d4d; background: none; padding: 4px 8px; border-radius: 5px; cursor: pointer; font-size: 0.7rem; }
+
+        .modal { display: none; position: fixed; z-index: 2000; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); justify-content: center; align-items: center; }
+        .modal-content { background: #0f0e1a; padding: 20px; border-radius: 20px; width: 85%; max-width: 350px; border: 1px solid var(--gold); }
+        
+        input, textarea { width: 100%; padding: 10px; margin: 8px 0; border-radius: 5px; border: none; background: #222; color: #fff; box-sizing: border-box; font-family: 'Cairo'; }
+        
+        .page { display: none; }
+        .active { display: block; }
+        .support-btn { background: #25d366; color: white; border: none; padding: 10px 20px; border-radius: 50px; cursor: pointer; font-family: 'Cairo'; font-weight: bold; font-size: 0.8rem; margin: 20px auto; display: block; }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<nav>
+    <div class="logo-text">ROYAL MOBILE</div>
+    <div class="nav-buttons">
+        <button onclick="showPage('shopPage')">🏠 المعرض</button>
+        <button onclick="checkAdmin()">⚙️ لوحة الإدارة</button>
+    </div>
+</nav>
+
+<div class="container">
+    <div id="shopPage" class="page active">
+        <div id="phoneList" class="phone-grid"></div>
+        <button class="support-btn" onclick="window.open('https://wa.me/962772802455')">💬 تواصل مع الدعم</button>
+    </div>
+
+    <div id="adminPage" class="page">
+        <div class="admin-box">
+            <h2 style="color:var(--gold); text-align:center; font-size: 1.2rem; margin-top:0;">➕ إضافة جهاز جديد</h2>
+            <input type="text" id="pName" placeholder="اسم الجهاز">
+            <input type="text" id="pPrice" placeholder="السعر">
+            <textarea id="pDesc" placeholder="المواصفات والحالة..."></textarea>
+            <input type="file" id="pFile" accept="image/*">
+            <p id="loadingMsg" style="display:none; color: var(--gold); text-align:center; font-size:0.8rem;">جاري الحفظ...</p>
+            <button class="btn-order" id="saveBtn" onclick="addPhone()">حفظ الجهاز</button>
+        </div>
+
+        <div class="admin-box">
+            <h2 style="color:var(--gold); text-align:center; font-size: 1.2rem; margin-top:0;">📝 إدارة وحذف المنتجات</h2>
+            <div id="adminPhoneList">
+                </div>
+            <button onclick="logoutAdmin()" style="background:none; border:none; color:#aaa; width:100%; margin-top:20px; font-size:0.8rem; cursor:pointer;">تسجيل خروج من الإدارة</button>
+        </div>
+    </div>
+</div>
+
+<div id="infoModal" class="modal">
+    <div class="modal-content">
+        <h3 style="color:var(--gold); margin-top:0;">المواصفات والحالة</h3>
+        <p id="infoText" style="font-size: 0.9rem; color: #ccc; line-height: 1.5;"></p>
+        <button onclick="closeModal('infoModal')" style="background:var(--gold); border:none; color:#fff; width:100%; padding:10px; border-radius:10px;">إغلاق</button>
+    </div>
+</div>
+
+<div id="orderModal" class="modal">
+    <div class="modal-content">
+        <h3 id="orderTitle" style="color:var(--gold); text-align:center;"></h3>
+        <input type="text" id="cName" placeholder="اسمك الكامل">
+        <input type="text" id="cAddr" placeholder="العنوان">
+        <input type="tel" id="cPhone" placeholder="رقم الهاتف">
+        <button class="btn-order" onclick="sendOrder()" style="background:#25d366">إرسال الطلب (واتساب)</button>
+        <button onclick="closeModal('orderModal')" style="background:none; border:none; color:#aaa; width:100%; margin-top:10px;">إلغاء</button>
+    </div>
+</div>
+
+<script>
+    let phones = JSON.parse(localStorage.getItem('royal_phones')) || [];
+    let curP = null; let isAdmin = false;
+    const myNum = "962772802455"; const passKey = "royal2024";
+
+    function showPage(id) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        if(id === 'shopPage') render();
+        if(id === 'adminPage') renderAdminList();
+    }
+
+    function checkAdmin() {
+        if(isAdmin) showPage('adminPage');
+        else { 
+            let p = prompt("أدخل رمز المالك:"); 
+            if(p === passKey) { isAdmin = true; showPage('adminPage'); } 
+            else if(p !== null) { alert("الرمز خطأ!"); }
+        }
+    }
+
+    function logoutAdmin() { isAdmin = false; showPage('shopPage'); }
+
+    function addPhone() {
+        const n = document.getElementById('pName').value, pr = document.getElementById('pPrice').value, 
+              d = document.getElementById('pDesc').value, f = document.getElementById('pFile').files[0];
+
+        if (n && pr && f) {
+            document.getElementById('loadingMsg').style.display = 'block';
+            document.getElementById('saveBtn').disabled = true;
+
+            const reader = new FileReader();
+            reader.readAsDataURL(f);
+            reader.onload = function(event) {
+                const img = new Image();
+                img.src = event.target.result;
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    const MAX_WIDTH = 400;
+                    const scaleSize = MAX_WIDTH / img.width;
+                    canvas.width = MAX_WIDTH;
+                    canvas.height = img.height * scaleSize;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    const dataUrl = canvas.toDataURL('image/jpeg', 0.6); 
+
+                    phones.push({ id: Date.now(), n, pr, d, img: dataUrl });
+                    localStorage.setItem('royal_phones', JSON.stringify(phones));
+                    
+                    document.getElementById('pName').value=''; 
+                    document.getElementById('pPrice').value='';
+                    document.getElementById('pDesc').value='';
+                    document.getElementById('pFile').value='';
+                    document.getElementById('loadingMsg').style.display = 'none';
+                    document.getElementById('saveBtn').disabled = false;
+                    
+                    alert('تم الحفظ!');
+                    renderAdminList(); // تحديث القائمة في لوحة التحكم
+                };
+            };
+        } else { alert('يرجى تعبئة الحقول'); }
+    }
+
+    // وظيفة لعرض قائمة المنتجات في لوحة التحكم للحذف
+    function renderAdminList() {
+        const adminList = document.getElementById('adminPhoneList');
+        adminList.innerHTML = '';
+        if(phones.length === 0) adminList.innerHTML = '<p style="text-align:center; font-size:0.8rem; color:#666;">لا توجد منتجات مضافة.</p>';
+        phones.forEach(p => {
+            adminList.innerHTML += `
+                <div class="admin-list-item">
+                    <span>${p.n}</span>
+                    <button class="del-btn-small" onclick="delP(${p.id})">حذف 🗑️</button>
+                </div>
+            `;
+        });
+    }
+
+    function render() {
+        const l = document.getElementById('phoneList'); l.innerHTML = '';
+        phones.forEach(p => {
+            l.innerHTML += `
+                <div class="phone-card">
+                    <img src="${p.img}">
+                    <h3>${p.n}</h3>
+                    <div class="price-tag">${p.pr}</div>
+                    <button class="btn-info" onclick="openInfo(\`${p.d}\`)">📋 المواصفات</button>
+                    <button class="btn-order" onclick="openOrder('${p.n}', '${p.pr}')">اطلب الآن</button>
+                </div>
+            `;
+        });
+    }
+
+    function openInfo(d) { document.getElementById('infoText').innerText = d || 'لا يوجد وصف'; document.getElementById('infoModal').style.display='flex'; }
+    function openOrder(n, pr) { curP = {n, pr}; document.getElementById('orderTitle').innerText = n; document.getElementById('orderModal').style.display='flex'; }
+    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+    function sendOrder() {
+        const cn = document.getElementById('cName').value, ca = document.getElementById('cAddr').value, cp = document.getElementById('cPhone').value;
+        if(cn && ca && cp) {
+            const msg = `*طلب شراء جديد*%0A*الجهاز:* ${curP.n}%0A*الاسم:* ${cn}%0A*الهاتف:* ${cp}`;
+            window.open(`https://wa.me/${myNum}?text=${msg}`, '_blank');
+            closeModal('orderModal');
+        }
+    }
+
+    function delP(id) { 
+        if(confirm('هل تريد حذف هذا الجهاز من المعرض؟')) { 
+            phones = phones.filter(x => x.id !== id); 
+            localStorage.setItem('royal_phones', JSON.stringify(phones)); 
+            renderAdminList(); 
+        } 
+    }
+
+    render();
+</script>
+</body>
+</html>
