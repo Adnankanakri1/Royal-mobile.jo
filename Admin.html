@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Royal Mobile | Studio Upload</title>
+    <style>
+        :root { --gold: #ffd700; --royal-blue: #0f0c29; }
+        body {
+            margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--royal-blue);
+            color: #fff; background-image: radial-gradient(circle at 2px 2px, rgba(255,255,255,0.05) 1px, transparent 0);
+            background-size: 30px 30px; min-height: 100vh;
+        }
+
+        nav {
+            background: rgba(0,0,0,0.6); padding: 15px; text-align: center;
+            backdrop-filter: blur(10px); border-bottom: 1px solid var(--gold);
+            position: sticky; top: 0; z-index: 100;
+        }
+        nav button {
+            background: none; border: 1px solid var(--gold); color: var(--gold);
+            padding: 8px 15px; cursor: pointer; border-radius: 5px; margin: 5px; font-weight: bold;
+        }
+
+        .container { padding: 20px; max-width: 1000px; margin: auto; }
+        .page { display: none; animation: fadeIn 0.4s; }
+        .active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* لوحة التحكم */
+        .admin-card {
+            background: rgba(255,255,255,0.1); padding: 25px; border-radius: 15px;
+            border: 1px solid rgba(255,255,255,0.1); margin-bottom: 30px;
+        }
+        label { display: block; margin-top: 10px; color: var(--gold); font-size: 0.9rem; }
+        input {
+            width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px;
+            border: none; background: #fff; color: #333; box-sizing: border-box;
+        }
+
+        /* تنسيق زر رفع الصور */
+        input[type="file"] {
+            background: rgba(255,255,255,0.2); color: #fff; padding: 10px;
+        }
+
+        .btn-add {
+            background: linear-gradient(45deg, #ffd700, #ff8c00); width: 100%;
+            border: none; padding: 15px; font-weight: bold; cursor: pointer; 
+            border-radius: 8px; margin-top: 20px; font-size: 1.1rem;
+        }
+
+        /* عرض الهواتف */
+        .phone-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 20px;
+        }
+        .phone-card {
+            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 15px; padding: 15px; text-align: center; transition: 0.3s;
+        }
+        .phone-card:hover { transform: translateY(-5px); border-color: var(--gold); }
+        .phone-card img { width: 100%; height: 200px; object-fit: cover; border-radius: 10px; }
+        .phone-card h3 { color: var(--gold); margin: 10px 0; }
+        .price { font-size: 1.3rem; font-weight: bold; color: #fff; }
+        .delete-btn {
+            background: #ff4d4d; color: white; border: none; padding: 7px 15px;
+            border-radius: 5px; cursor: pointer; margin-top: 15px; width: 100%;
+        }
+    </style>
+</head>
+<body>
+
+<nav>
+    <div style="font-size: 1.8rem; color: var(--gold); font-weight: bold; margin-bottom: 10px; letter-spacing: 2px;">ROYAL MOBILE</div>
+    <button onclick="showPage('shopPage')">🏠 المعرض</button>
+    <button onclick="showPage('adminPage')">⚙️ إضافة هاتف</button>
+</nav>
+
+<div class="container">
+    
+    <div id="shopPage" class="page active">
+        <h2 style="text-align: center; border-bottom: 2px solid var(--gold); padding-bottom: 10px;">الهواتف المتاحة</h2>
+        <div id="phoneList" class="phone-grid"></div>
+    </div>
+
+    <div id="adminPage" class="page">
+        <div class="admin-card">
+            <h2 style="color: var(--gold); margin-top: 0;">إضافة منتج جديد</h2>
+            
+            <label>اسم الهاتف:</label>
+            <input type="text" id="phoneName" placeholder="مثلاً: iPhone 15 Pro">
+            
+            <label>السعر:</label>
+            <input type="text" id="phonePrice" placeholder="مثلاً: 350 دينار">
+            
+            <label>صورة الهاتف (من الاستوديو):</label>
+            <input type="file" id="phoneFile" accept="image/*">
+            
+            <button class="btn-add" onclick="addPhone()">حفظ في رويال موبايل</button>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    let phones = JSON.parse(localStorage.getItem('royal_phones')) || [];
+
+    function showPage(pageId) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.getElementById(pageId).classList.add('active');
+        if(pageId === 'shopPage') renderPhones();
+    }
+
+    function addPhone() {
+        const name = document.getElementById('phoneName').value;
+        const price = document.getElementById('phonePrice').value;
+        const fileInput = document.getElementById('phoneFile');
+        const file = fileInput.files[0];
+
+        if (name && price && file) {
+            const reader = new FileReader();
+            
+            // تحويل الصورة إلى نص (Base64)
+            reader.onload = function(e) {
+                const imageData = e.target.result;
+                const newPhone = { id: Date.now(), name, price, img: imageData };
+                
+                phones.push(newPhone);
+                localStorage.setItem('royal_phones', JSON.stringify(phones));
+                
+                // إعادة ضبط الحقول
+                document.getElementById('phoneName').value = '';
+                document.getElementById('phonePrice').value = '';
+                fileInput.value = '';
+                
+                alert('تمت إضافة الهاتف بنجاح!');
+                showPage('shopPage');
+            };
+            
+            reader.readAsDataURL(file);
+        } else {
+            alert('الرجاء تعبئة جميع الحقول واختيار صورة');
+        }
+    }
+
+    function renderPhones() {
+        const list = document.getElementById('phoneList');
+        list.innerHTML = '';
+
+        if(phones.length === 0) {
+            list.innerHTML = '<p style="text-align:center; width:100%; opacity: 0.5;">لا توجد هواتف معروضة حالياً..</p>';
+            return;
+        }
+
+        phones.forEach(phone => {
+            list.innerHTML += `
+                <div class="phone-card">
+                    <img src="${phone.img}" alt="${phone.name}">
+                    <h3>${phone.name}</h3>
+                    <div class="price">${phone.price}</div>
+                    <button class="delete-btn" onclick="deletePhone(${phone.id})">حذف المنتج</button>
+                </div>
+            `;
+        });
+    }
+
+    function deletePhone(id) {
+        if(confirm('هل أنت متأكد من حذف هذا الهاتف؟')) {
+            phones = phones.filter(p => p.id !== id);
+            localStorage.setItem('royal_phones', JSON.stringify(phones));
+            renderPhones();
+        }
+    }
+
+    renderPhones();
+</script>
+
+</body>
+</html>
